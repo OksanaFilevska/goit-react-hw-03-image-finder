@@ -1,12 +1,12 @@
 import PropTypes from 'prop-types';
 import s from './NotFound.module.css';
 
-function SerchErrorView({ message }) {
+function NotFound ({ message }) {
   return <p className={s.message}> Search images {message} not found</p>;
 }
 
-SerchErrorView.protoType = {
+NotFound.protoType = {
   message: PropTypes.string,
 };
 
-export default SerchErrorView;
+export default NotFound;
