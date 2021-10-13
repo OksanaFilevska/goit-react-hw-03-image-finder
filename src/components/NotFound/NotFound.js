@@ -9,4 +9,4 @@ SerchErrorView.protoType = {
   message: PropTypes.string,
 };
 
-export default SerchErrorView;
+export default NotFound;
