@@ -2,12 +2,9 @@ import { Component } from 'react';
 import s from './ImageGallery.module.css';
 import ImageGalleryItem from '../ImageGalleryItem';
 import Loader from '../Loader';
-import SerchErrorView from '../NotFound';
+import NotFound from '../NotFound';
 import Button from '../Button';
-
-import PixabayApiService from '../../services/pixabay-api.js';
-
-const pixabayApiService = new PixabayApiService();
+import { fetchPixabay } from '../../services/pixabay-api.js';
 
 const Status = {
   IDLE: 'idle',
@@ -27,15 +24,16 @@ export default class ImageGallery extends Component {
   componentDidUpdate(prevProps, prevState) {
     const prevName = prevProps.searchQuery;
     const nextName = this.props.searchQuery;
-    const { page } = this.state;
     if (prevName !== nextName) {
       this.setState({ status: Status.PENDING });
-      pixabayApiService.query = nextName;
-      pixabayApiService.resetPage();
 
-      pixabayApiService.fetchApi(page).then(result => {
+      fetchPixabay(nextName, 1).then(result => {
         if (result.hits.length !== 0) {
-          return this.setState({ images: result.hits, status: 'resolved' });
+          return this.setState({
+            images: result.hits,
+            status: 'resolved',
+            page: 1,
+          });
         }
 
         return this.setState({ images: result.hits, status: 'rejected' });
@@ -44,28 +42,25 @@ export default class ImageGallery extends Component {
   }
 
   onLoadMore = () => {
+    const nextName = this.props.searchQuery;
+    const { page } = this.state;
     this.setState({ status: 'pending' });
 
-    pixabayApiService.incrementPage();
-
-    pixabayApiService
-      .fetchApi()
+    fetchPixabay(nextName, page + 1)
       .then(result => {
         return this.setState(prevState => {
           return {
             images: [...prevState.images, ...result.hits],
             status: 'resolved',
+            page: prevState.page + 1,
           };
         });
       })
-
       .finally(() => {
-        setTimeout(() => {
-          window.scrollTo({
-            top: document.documentElement.scrollHeight,
-            behavior: 'smooth',
-          });
-        }, 200);
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth',
+        });
       });
   };
 
@@ -90,7 +85,7 @@ export default class ImageGallery extends Component {
     }
 
     if (status === 'rejected') {
-      return <SerchErrorView message={searchQuery} />;
+      return <NotFound message={searchQuery} />;
     }
 
     if (status === 'resolved') {
